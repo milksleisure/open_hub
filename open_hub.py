@@ -6,6 +6,7 @@ import glob
 import subprocess
 import argparse
 import time
+import re
 from pykeyboard import PyKeyboard
 
 GVFS='/run/user/1000/gvfs'
@@ -37,24 +38,21 @@ def parse_samba():
     server = token[2]
     share = token[3]
     match = None
+    pattern = re.compile('smb-share:server=([^,]+),share=([^,]+)')
     for i in glob.glob('{}/smb-share*'.format(GVFS)):
-        if server in i:
+        result = pattern.search(i)
+        if server == result.group(1) and share == result.group(2):
             match = i
             break
 
     if match is not None:
-        # print(url)
-        # print(match)
-        # print(url.replace('smb://{}/{}'.format(server,share),match))
         path = url.replace('smb://{}/{}'.format(server,share),match)
-        print(path)
+        # TODO: fix more special paths
         return path
 
     # Shall not be here...
     return url
 
-    # print(os.path.exists(path))
-    # subprocess.call(['mcomix', path])
 
 def get_options():
     parser = argparse.ArgumentParser(description='fast launcher via clipboard data')
@@ -73,7 +71,7 @@ def view_main():
 
 def stream_main():
     f = get_clipboard()
-    subprocess.call(['streamlink', f, '1080p60,1080p,720p60,720p'])
+    subprocess.call(['streamlink', '-p', 'vlc', f, '1080p60,1080p,720p60,720p'])
     
 
 if __name__ == '__main__':
