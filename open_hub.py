@@ -83,7 +83,7 @@ def play_main():
         audio = '--audio-device=pulse/alsa_output.pci-0000_00_03.0.hdmi-stereo'
         volume = '--volume=50'
 
-    subprocess.call(['mpv', volume, '--hwdec=vaapi', '--vo=gl', audio, f])
+    subprocess.call(['mpv', volume, '--hwdec=vaapi', '--vo=gpu', audio, f])
 
 def view_main():
     f = parse_samba()
@@ -92,7 +92,7 @@ def view_main():
 def stream_main():
     f = get_clipboard()
     # subprocess.call(['streamlink', '-p', 'vlc', f, '1080p60,1080p,720p60,720p'])
-    subprocess.call(['streamlink', '-p', 'mpv --hwdec=vaapi --vo=gl', f, '1080p60,1080p,720p60,720p'])
+    subprocess.call(['streamlink', '-p', 'mpv --hwdec=vaapi --vo=gpu', f, '1080p60,1080p,720p60,720p'])
 
 class App(QWidget):
     def __init__(self):
