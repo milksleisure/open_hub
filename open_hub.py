@@ -9,6 +9,12 @@ import time
 import re
 from pykeyboard import PyKeyboard
 
+# For suspend main
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QDesktopWidget
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import pyqtSlot, QTimer
+
 GVFS='/run/user/1000/gvfs'
 
 def send_copy():
@@ -27,11 +33,15 @@ def send_copy():
 def get_clipboard():
     return pyperclip.paste()
 
+_match_samba = False
 def parse_samba():
     url = get_clipboard()
     if 'smb://' not in url:
         print('No match smb...')
         return url
+    else:
+        global _match_samba
+        _match_samba = True
 
     url = parse.unquote(url)
     token = url.split('/')
@@ -59,11 +69,21 @@ def get_options():
     parser.add_argument('--play', action='store_true', help='Play the link')
     parser.add_argument('--view', action='store_true', help='View the link')
     parser.add_argument('--stream', action='store_true', help='Stream the link')
+    parser.add_argument('--suspend', action='store_true', help='Suspend with confirmation')
     return parser.parse_args()
 
 def play_main():
     f = parse_samba()
-    subprocess.call(['vlc', f])
+    # subprocess.call(['vlc', f])
+    # mpv --hwdec=vaapi --vo=gl 
+    if _match_samba:
+        audio = '--audio-device=pulse/alsa_output.pci-0000_00_1b.0.analog-stereo'
+        volume = '--volume=70'
+    else:
+        audio = '--audio-device=pulse/alsa_output.pci-0000_00_03.0.hdmi-stereo'
+        volume = '--volume=50'
+
+    subprocess.call(['mpv', volume, '--hwdec=vaapi', '--vo=gl', audio, f])
 
 def view_main():
     f = parse_samba()
@@ -71,8 +91,41 @@ def view_main():
 
 def stream_main():
     f = get_clipboard()
-    subprocess.call(['streamlink', '-p', 'vlc', f, '1080p60,1080p,720p60,720p'])
-    
+    # subprocess.call(['streamlink', '-p', 'vlc', f, '1080p60,1080p,720p60,720p'])
+    subprocess.call(['streamlink', '-p', 'mpv --hwdec=vaapi --vo=gl', f, '1080p60,1080p,720p60,720p'])
+
+class App(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.title = 'PyQt5 messagebox - pythonspot.com'
+        self.left = 10
+        self.top = 10
+        self.width = 320
+        self.height = 200
+        self.initUI()
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+        # self.setGeometry(self.left, self.top, self.width, self.height)
+ 
+        buttonReply = QMessageBox.question(
+            self, 'PyQt5 message', "Do you like PyQt5?", 
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if buttonReply == QMessageBox.Yes:
+            print('Yes clicked.')
+        else:
+            print('No clicked.')
+ 
+        self.show()
+ 
+def suspend_main():
+    # app = QApplication(sys.argv)
+    # ex = App()
+    # sys.exit(app.exec_())
+    subprocess.call(['bash', '-i', '-c', 'sudo mem_suspend'])
 
 if __name__ == '__main__':
     args = get_options()
@@ -84,3 +137,6 @@ if __name__ == '__main__':
         view_main()
     elif args.stream:
         stream_main()
+    elif args.suspend:
+        suspend_main()
+
