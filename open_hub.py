@@ -83,7 +83,8 @@ def play_main():
         audio = '--audio-device=pulse/alsa_output.pci-0000_00_03.0.hdmi-stereo'
         volume = '--volume=50'
 
-    subprocess.call(['mpv', volume, '--hwdec=vaapi', '--vo=gpu', audio, f])
+    subprocess.call(['mpv', volume, '--hwdec=vaapi', '--vo=gpu',
+        '--ytdl-format=bestvideo[height<=?1080]+bestaudio/best', audio, f])
 
 def view_main():
     f = parse_samba()
