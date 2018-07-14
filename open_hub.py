@@ -70,13 +70,14 @@ def get_options():
     parser.add_argument('--view', action='store_true', help='View the link')
     parser.add_argument('--stream', action='store_true', help='Stream the link')
     parser.add_argument('--suspend', action='store_true', help='Suspend with confirmation')
+    parser.add_argument('--no-head-set', action='store_true', default=False, help='Disable headset on --play')
     return parser.parse_args()
 
-def play_main():
+def play_main(no_head_set=False):
     f = parse_samba()
     # subprocess.call(['vlc', f])
     # mpv --hwdec=vaapi --vo=gl 
-    if _match_samba:
+    if _match_samba and not no_head_set:
         audio = '--audio-device=pulse/alsa_output.pci-0000_00_1b.0.analog-stereo'
         volume = '--volume=70'
     else:
@@ -132,7 +133,7 @@ if __name__ == '__main__':
     args = get_options()
     if args.play:
         send_copy()
-        play_main()
+        play_main(args.no_head_set)
     elif args.view:
         send_copy()
         view_main()
